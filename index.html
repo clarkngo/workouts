@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Workout routines</title>
+  <meta name="description" content="A floor reference for cable walks, plyometrics, foam rolling, explosiveness, medicine-ball hip work, and kettlebells.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#routines">Skip to routines</a>
+  <div class="wrap">
+    <header class="mast">
+      <p class="eyebrow">Structured workout routines</p>
+      <h1>Workout reference</h1>
+      <p class="lede">Tap a filter when you start that block. The figure marks the muscles to feel.</p>
+    </header>
+    <nav id="filters" class="filters" aria-label="Routine filters"></nav>
+    <p id="status" class="visually-hidden" aria-live="polite"></p>
+    <main id="routines"></main>
+    <footer class="colophon">
+      <p>Doses are a starting point. Stay in a range you control.</p>
+    </footer>
+  </div>
+  <script src="figure.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
