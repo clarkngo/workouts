@@ -199,8 +199,15 @@ const categories = [
   },
 ];
 
+function phases(base, start, finish) {
+  return {
+    start: figure({ ...base, ...start, marks: [] }),
+    finish: figure({ ...base, ...finish }),
+  };
+}
+
 function poseLateralWalk(color, marks, marker) {
-  return figure({
+  return phases({
     view: "front",
     color,
     marks,
@@ -214,11 +221,15 @@ function poseLateralWalk(color, marks, marker) {
     behind(j, ink) {
       return cableRig([16, j.left.ankle[1] - 6], j.left.ankle, ink);
     },
-  });
+  }, {
+    stance: 8,
+    left: { abd: 8, knee: 16, out: 12, elbow: 4 },
+    right: { abd: 8, knee: 16, out: 12, elbow: 4 },
+  }, {});
 }
 
 function poseForwardWalk(color, marks, marker) {
-  return figure({
+  return phases({
     color,
     marks,
     marker,
@@ -232,11 +243,15 @@ function poseForwardWalk(color, marks, marker) {
     behind(j, ink) {
       return cableRig([14, j.far.ankle[1] - 28], j.far.ankle, ink);
     },
-  });
+  }, {
+    torso: 2,
+    near: { hip: 8, knee: 8, shoulder: 6, elbow: 8, foot: 2 },
+    far: { hip: 4, knee: 6, shoulder: 4, elbow: 6, foot: 2 },
+  }, {});
 }
 
 function poseSquatJump(color, marks, marker) {
-  return figure({
+  return phases({
     color,
     marks,
     marker,
@@ -248,11 +263,16 @@ function poseSquatJump(color, marks, marker) {
     floor: 190,
     near: { hip: 36, knee: 70, shoulder: 168, elbow: 6, foot: 34 },
     far: { hip: 24, knee: 74, shoulder: 160, elbow: 4, foot: 38 },
-  });
+  }, {
+    float: 0,
+    torso: 12,
+    near: { hip: 48, knee: 78, shoulder: -28, elbow: 20, foot: 8 },
+    far: { hip: 40, knee: 74, shoulder: -22, elbow: 16, foot: 8 },
+  }, {});
 }
 
 function poseLateralBound(color, marks, marker) {
-  return figure({
+  return phases({
     color,
     marks,
     marker,
@@ -265,11 +285,16 @@ function poseLateralBound(color, marks, marker) {
     gap: 4,
     near: { hip: 48, knee: 36, shoulder: 55, elbow: 8, foot: 28 },
     far: { hip: -36, knee: 18, shoulder: -30, elbow: 12, foot: 20 },
-  });
+  }, {
+    torso: 18,
+    float: 0,
+    near: { hip: 36, knee: 62, shoulder: -20, elbow: 16, foot: 6 },
+    far: { hip: 10, knee: 20, shoulder: 8, elbow: 8, foot: 4 },
+  }, {});
 }
 
 function poseThoracicRoll(color, marks, marker) {
-  return figure({
+  return phases({
     color,
     marks,
     marker,
@@ -285,11 +310,14 @@ function poseThoracicRoll(color, marks, marker) {
       const back = along(j.shoulder, j.hip, 0.35);
       return roller(back[0], back[1] + 12, 15);
     },
-  });
+  }, {
+    torso: 82,
+    near: { hip: -108, knee: -40, shoulder: -8, elbow: 70, foot: 8 },
+  }, {});
 }
 
 function poseGluteRoll(color, marks, marker) {
-  return figure({
+  return phases({
     color,
     marks,
     marker,
@@ -305,11 +333,15 @@ function poseGluteRoll(color, marks, marker) {
     behind(j) {
       return roller(j.hip[0] + 4, j.hip[1] + 14, 15);
     },
-  });
+  }, {
+    torso: -8,
+    near: { hip: 40, knee: 28, shoulder: 20, elbow: 10, foot: 4 },
+    far: { hip: 48, knee: 36, shoulder: 16, elbow: 8, foot: 6 },
+  }, {});
 }
 
 function poseBroadJump(color, marks, marker) {
-  return figure({
+  return phases({
     color,
     marks,
     marker,
@@ -321,11 +353,16 @@ function poseBroadJump(color, marks, marker) {
     floor: 190,
     near: { hip: 42, knee: 48, shoulder: 62, elbow: 6, foot: 30 },
     far: { hip: -28, knee: 22, shoulder: -18, elbow: 8, foot: 18 },
-  });
+  }, {
+    torso: 48,
+    float: 0,
+    near: { hip: 28, knee: 42, shoulder: -36, elbow: 18, foot: 6 },
+    far: { hip: 18, knee: 36, shoulder: -28, elbow: 14, foot: 6 },
+  }, {});
 }
 
 function poseClapPushup(color, marks, marker) {
-  return figure({
+  return phases({
     color,
     marks,
     marker,
@@ -338,11 +375,14 @@ function poseClapPushup(color, marks, marker) {
     farLeg: false,
     near: { hip: -82, knee: 4, shoulder: 8, elbow: 28, foot: 10 },
     far: { shoulder: 4, elbow: 24 },
-  });
+  }, {
+    near: { hip: -82, knee: 8, shoulder: 18, elbow: 95, foot: 8 },
+    far: { shoulder: 14, elbow: 90 },
+  }, {});
 }
 
 function poseHipRoll(color, marks, marker) {
-  return figure({
+  return phases({
     color,
     marks,
     marker,
@@ -357,11 +397,14 @@ function poseHipRoll(color, marks, marker) {
     behind(j) {
       return medball(j.hip[0] + 2, j.hip[1] + 12, 16);
     },
-  });
+  }, {
+    torso: 88,
+    near: { hip: -96, knee: -30, shoulder: 4, elbow: 4, foot: 10 },
+  }, {});
 }
 
 function poseFigure4(color, marks, marker) {
-  return figure({
+  return phases({
     color,
     marks,
     marker,
@@ -376,11 +419,15 @@ function poseFigure4(color, marks, marker) {
     behind(j) {
       return medball(j.hip[0] - 2, j.hip[1] + 12, 16);
     },
-  });
+  }, {
+    torso: 2,
+    near: { hip: 42, knee: 48, shoulder: 10, elbow: 8, foot: 2 },
+    far: { hip: 70, knee: 110, foot: 20 },
+  }, {});
 }
 
 function poseSwing(color, marks, marker) {
-  return figure({
+  return phases({
     color,
     marks,
     marker,
@@ -395,11 +442,15 @@ function poseSwing(color, marks, marker) {
     front(j) {
       return kettlebell(j.near.wrist[0], j.near.wrist[1] - 2, 0.9);
     },
+  }, {}, {
+    torso: 6,
+    near: { hip: -8, knee: 8, shoulder: 150, elbow: 8, foot: 2 },
+    far: { hip: -4, knee: 6, shoulder: 148, elbow: 6, foot: 2 },
   });
 }
 
 function poseGoblet(color, marks, marker) {
-  return figure({
+  return phases({
     color,
     marks,
     marker,
@@ -414,7 +465,11 @@ function poseGoblet(color, marks, marker) {
     front(j) {
       return kettlebell(j.near.wrist[0] + 2, j.near.wrist[1] - 4, 0.86);
     },
-  });
+  }, {
+    torso: 2,
+    near: { hip: 8, knee: 8, shoulder: 70, elbow: 100, foot: 0 },
+    far: { hip: 6, knee: 6, foot: 0 },
+  }, {});
 }
 
 function esc(value) {
@@ -427,22 +482,17 @@ function esc(value) {
   }[ch]));
 }
 
-function figureSvg(exercise, inner) {
-  const marker = `mk-${exercise.id}`;
-  return `<svg viewBox="0 0 260 200" role="img" aria-label="${esc(exercise.name)}">
-    <defs>
-      <marker id="${marker}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-        <path d="M0 0 L10 5 L0 10 Z" fill="#aeb6bf"/>
-      </marker>
-    </defs>
-    ${inner}
-  </svg>`;
+function figureSvg(label, inner) {
+  return `<svg viewBox="0 0 260 200" role="img" aria-label="${esc(label)}">${inner}</svg>`;
 }
 
 function cardHtml(exercise, category) {
-  const inner = exercise.build(category.color, exercise.marks, `mk-${exercise.id}`);
+  const phases = exercise.build(category.color, exercise.marks, `mk-${exercise.id}`);
   return `<article class="card" id="${exercise.id}" style="--accent:${category.color}">
-    <div class="stage">${figureSvg(exercise, inner)}</div>
+    <div class="stage pair">
+      <div class="phase">${figureSvg(`${exercise.name}, start`, phases.start)}<span>Start</span></div>
+      <div class="phase">${figureSvg(`${exercise.name}, finish`, phases.finish)}<span>Finish</span></div>
+    </div>
     <div class="title-row"><span></span><h3>${esc(exercise.name)}</h3><span class="n">${exercise.n}.</span></div>
     <p class="dose">${esc(exercise.dose)}</p>
     <p class="cue">${esc(exercise.cue)}</p>

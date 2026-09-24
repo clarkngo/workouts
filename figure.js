@@ -25,21 +25,12 @@ const BONE = {
 };
 
 const W = {
-  torso: 11,
-  neck: 6.5,
-  arm: 8,
-  leg: 10,
-  foot: 6.5,
-  muscle: 5.5,
-};
-
-const SLOTS = {
-  tl: { x: 8, y: 18, anchor: "start" },
-  tr: { x: 252, y: 18, anchor: "end" },
-  ml: { x: 8, y: 64, anchor: "start" },
-  mr: { x: 252, y: 64, anchor: "end" },
-  bl: { x: 8, y: 128, anchor: "start" },
-  br: { x: 252, y: 128, anchor: "end" },
+  torso: 18,
+  neck: 11,
+  arm: 12,
+  leg: 15,
+  foot: 8,
+  muscle: 7,
 };
 
 function n(value) {
@@ -258,11 +249,36 @@ function markSegment(joints, mark) {
   return [along(limb[ends[0]], limb[ends[1]], 0.24), along(limb[ends[0]], limb[ends[1]], 0.76)];
 }
 
-function labelSvg(mark, target, marker) {
-  const slot = SLOTS[mark.place || "tl"];
-  const textWidth = mark.t.length * 5.6;
-  const fromX = slot.anchor === "end" ? slot.x - textWidth : slot.x + textWidth;
-  return `<text x="${slot.x}" y="${slot.y}" text-anchor="${slot.anchor}" fill="#8b939e" font-size="11" font-family="Archivo, Helvetica, sans-serif" font-weight="500">${mark.t}</text><line x1="${n(fromX)}" y1="${slot.y - 3}" x2="${n(target[0])}" y2="${n(target[1])}" stroke="#aeb6bf" stroke-width="1.15" marker-end="url(#${marker})"/>`;
+const DIR = {
+  tl: [-1, -0.75],
+  tr: [1, -0.75],
+  ml: [-1, 0.1],
+  mr: [1, 0.1],
+  bl: [-0.9, 0.7],
+  br: [0.9, 0.7],
+};
+
+function labelSvg(mark, target) {
+  const dir = DIR[mark.place] || DIR.tl;
+  const textWidth = Math.min(86, mark.t.length * 5.5);
+  let x = target[0] + dir[0] * 26;
+  let y = target[1] + dir[1] * 20;
+  const anchor = dir[0] >= 0 ? "start" : "end";
+  if (anchor === "start") x = Math.min(Math.max(8, x), 252 - textWidth);
+  else x = Math.max(Math.min(252, x), 8 + textWidth);
+  y = Math.max(14, Math.min(158, y));
+  return `<text x="${n(x)}" y="${n(y)}" text-anchor="${anchor}" fill="#8b939e" font-size="11" font-family="Archivo, Helvetica, sans-serif" font-weight="500">${mark.t}</text>`;
+}
+
+function musclePatch(a, b, color, scale) {
+  const mid = along(a, b, 0.5);
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const len = Math.hypot(dx, dy) || 1;
+  const ang = (Math.atan2(dy, dx) * 180) / Math.PI;
+  const rx = Math.max(9, len * 0.46) * scale;
+  const ry = W.muscle * 0.72 * scale;
+  return `<ellipse cx="${n(mid[0])}" cy="${n(mid[1])}" rx="${n(rx)}" ry="${n(ry)}" fill="${color}" transform="rotate(${n(ang)} ${n(mid[0])} ${n(mid[1])})"/>`;
 }
 
 function floorLine(y) {
@@ -293,42 +309,88 @@ function cableRig(post, end, color) {
   return `<rect x="${n(x)}" y="${n(top)}" width="6" height="${n(bottom - top)}" rx="2" fill="#d5dce3"/><rect x="${n(x - 5)}" y="${n(bottom - 3)}" width="16" height="4" rx="1" fill="#c5ced6"/><circle cx="${n(x + 3)}" cy="${n(y)}" r="5.5" fill="#f7f8f6" stroke="#7d8792" stroke-width="2"/><line x1="${n(x + 9)}" y1="${n(y)}" x2="${n(end[0])}" y2="${n(end[1])}" stroke="${color}" stroke-width="2.3"/><circle cx="${n(end[0])}" cy="${n(end[1])}" r="4.6" fill="none" stroke="${color}" stroke-width="2.2"/>`;
 }
 
+const FAR = "#8b939c";
+
+function bone(a, b, wa, wb, color) {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const len = Math.hypot(dx, dy) || 1;
+  const px = -dy / len;
+  const py = dx / len;
+  const p = [
+    [a[0] + px * wa / 2, a[1] + py * wa / 2],
+    [b[0] + px * wb / 2, b[1] + py * wb / 2],
+    [b[0] - px * wb / 2, b[1] - py * wb / 2],
+    [a[0] - px * wa / 2, a[1] - py * wa / 2],
+  ];
+  return `<path d="${p.map((pt, i) => `${i ? "L" : "M"}${n(pt[0])} ${n(pt[1])}`).join("")}Z" fill="${color}"/>`;
+}
+
+function disc(p, r, color) {
+  return `<circle cx="${n(p[0])}" cy="${n(p[1])}" r="${n(r)}" fill="${color}"/>`;
+}
+
+function filledLimb(limb, s, color, part = "both") {
+  if (!limb) return "";
+  const parts = [];
+  if (part !== "arm" && limb.hip && limb.knee && limb.ankle) {
+    const hipW = 17 * s;
+    const kneeW = 12 * s;
+    const ankleW = 7.5 * s;
+    const toeW = 4.5 * s;
+    parts.push(bone(limb.hip, limb.knee, hipW, kneeW, color));
+    parts.push(bone(limb.knee, limb.ankle, kneeW, ankleW, color));
+    if (limb.toe) parts.push(bone(limb.ankle, limb.toe, ankleW * 0.85, toeW, color));
+    parts.push(disc(limb.hip, hipW / 2, color));
+    parts.push(disc(limb.knee, kneeW / 2 + 0.4, color));
+    parts.push(disc(limb.ankle, ankleW / 2, color));
+    if (limb.toe) parts.push(disc(limb.toe, toeW / 2 + 0.3, color));
+  }
+  if (part !== "leg" && limb.shoulder && limb.elbow && limb.wrist) {
+    const shW = 12 * s;
+    const elW = 8.5 * s;
+    const wrW = 6 * s;
+    parts.push(bone(limb.shoulder, limb.elbow, shW, elW, color));
+    parts.push(bone(limb.elbow, limb.wrist, elW, wrW, color));
+    parts.push(disc(limb.elbow, elW / 2 + 0.3, color));
+    parts.push(disc(limb.wrist, wrW / 2 + 0.6, color));
+  }
+  return parts.join("");
+}
+
+function filledTorso(joints, color) {
+  const s = joints.scale || 1;
+  const neck = along(joints.shoulder, joints.head, 0.55);
+  return [
+    bone(joints.shoulder, joints.hip, 22 * s, 16 * s, color),
+    bone(joints.shoulder, neck, 11 * s, 8 * s, color),
+    disc(joints.hip, 8 * s, color),
+    disc(joints.shoulder, 11 * s, color),
+    disc(joints.head, BONE.head * s, color),
+  ].join("");
+}
+
 function drawBody(joints) {
   const s = joints.scale || 1;
-  const w = {
-    torso: W.torso * s,
-    neck: W.neck * s,
-    arm: W.arm * s,
-    leg: W.leg * s,
-    foot: W.foot * s,
-  };
-  const headR = BONE.head * s;
   const parts = [];
-  const leg = (limb) => `${chain([limb.hip, limb.knee, limb.ankle], w.leg, BODY)}${chain([limb.ankle, limb.toe], w.foot, BODY)}`;
-  const arm = (limb) => chain([limb.shoulder, limb.elbow, limb.wrist], w.arm, BODY);
   if (joints.view === "front") {
-    parts.push(leg(joints.left));
-    parts.push(leg(joints.right));
-    parts.push(line(joints.shoulder, joints.hip, w.torso, BODY));
-    parts.push(line(joints.shoulder, along(joints.shoulder, joints.head, 0.72), w.neck, BODY));
-    parts.push(arm(joints.left));
-    parts.push(arm(joints.right));
+    parts.push(filledLimb(joints.left, s, BODY, "leg"));
+    parts.push(filledLimb(joints.right, s, BODY, "leg"));
+    parts.push(filledTorso(joints, BODY));
+    parts.push(filledLimb(joints.left, s, BODY, "arm"));
+    parts.push(filledLimb(joints.right, s, BODY, "arm"));
   } else {
-    if (joints.drawFarLeg) parts.push(leg(joints.far));
-    if (joints.drawFarArm) parts.push(arm(joints.far));
-    parts.push(line(joints.shoulder, joints.hip, w.torso, BODY));
-    parts.push(line(joints.shoulder, along(joints.shoulder, joints.head, 0.72), w.neck, BODY));
-    parts.push(leg(joints.near));
-    parts.push(arm(joints.near));
+    if (joints.drawFarLeg) parts.push(filledLimb(joints.far, s, FAR, "leg"));
+    if (joints.drawFarArm) parts.push(filledLimb(joints.far, s, FAR, "arm"));
+    parts.push(filledTorso(joints, BODY));
+    parts.push(filledLimb(joints.near, s, BODY));
   }
-  parts.push(`<circle cx="${n(joints.head[0])}" cy="${n(joints.head[1])}" r="${n(headR)}" fill="${BODY}"/>`);
   return parts.join("");
 }
 
 function figure(spec) {
   const joints = solve(spec);
   const color = spec.color;
-  const marker = spec.marker;
   const parts = [];
   if (spec.floor != null) {
     const limbs = [joints.near, joints.drawFarLeg === false ? null : joints.far, joints.left, joints.right].filter((limb) => limb && limb.ankle);
@@ -344,9 +406,8 @@ function figure(spec) {
   for (const mark of spec.marks || []) {
     const [a, b] = markSegment(joints, mark);
     const tone = mark.tone === "deep" ? shade(color) : color;
-    parts.push(line(a, b, W.muscle * (joints.scale || 1), tone));
-    const target = along(a, b, 0.5);
-    labels.push(labelSvg(mark, target, marker));
+    parts.push(musclePatch(a, b, tone, joints.scale || 1));
+    labels.push(labelSvg(mark, along(a, b, 0.5)));
   }
   return parts.join("") + labels.join("");
 }
