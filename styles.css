@@ -166,12 +166,29 @@ h1 {
 }
 
 .card {
-  width: 280px;
+  width: 340px;
   background: #fff;
   border: 1px solid #e6e3dc;
   border-top: 3px solid var(--accent);
   border-radius: 12px;
   padding: 4px 4px 16px;
+}
+
+.stage.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.phase span {
+  display: block;
+  margin-top: -6px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8d949c;
 }
 
 .stage svg {
