@@ -248,6 +248,17 @@ h1 {
   font-size: 13px;
 }
 
+.colophon p + p { margin-top: 6px; }
+
+.colophon a {
+  color: #4c535c;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.colophon a:hover { color: #17191d; }
+
 .visually-hidden {
   position: absolute;
   width: 1px;
