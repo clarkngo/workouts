@@ -11,12 +11,16 @@
 //
 // Front view uses abd (knee out), knee, out (arm away from the body), and elbow.
 
-const BODY = "#3a414b";
+const BODY = "#1f242b";
+const LIMB = "#4a5560";
+const ARM = "#6a7682";
+const FAR = "#b8c0c8";
+const EDGE = "#1a1e24";
 
 const BONE = {
-  torso: 46,
-  neck: 9,
-  head: 12,
+  torso: 48,
+  neck: 18,
+  head: 9,
   upper: 28,
   fore: 25,
   thigh: 36,
@@ -48,15 +52,6 @@ function add(a, b) {
 
 function along(a, b, t) {
   return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-}
-
-function chain(points, width, color) {
-  const d = points.map((p, i) => `${i ? "L" : "M"}${n(p[0])} ${n(p[1])}`).join("");
-  return `<path d="${d}" fill="none" stroke="${color}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
-}
-
-function line(a, b, width, color) {
-  return `<line x1="${n(a[0])}" y1="${n(a[1])}" x2="${n(b[0])}" y2="${n(b[1])}" stroke="${color}" stroke-width="${width}" stroke-linecap="round"/>`;
 }
 
 function shade(hex) {
@@ -191,8 +186,8 @@ function solve(spec) {
   const hip = spec.hip.slice();
   const torsoDir = -90 + face * (spec.torso || 0);
   const shoulder = add(hip, polar(torsoDir, BONE.torso));
-  const head = add(shoulder, polar(torsoDir, BONE.neck + BONE.head * 0.15));
-  const gap = spec.gap ?? 6;
+  const head = add(shoulder, polar(torsoDir, BONE.neck + BONE.head));
+  const gap = spec.gap ?? 9;
   const farHip = [hip[0] - face * gap, hip[1] + 1];
   const farShoulder = [shoulder[0] - face * gap, shoulder[1]];
   const far = limbSide(farHip, farShoulder, spec.far || {}, face);
@@ -214,7 +209,7 @@ function solve(spec) {
 function solveFront(spec) {
   const hip = spec.hip.slice();
   const shoulder = [hip[0], hip[1] - BONE.torso];
-  const head = [shoulder[0], shoulder[1] - BONE.neck - BONE.head * 0.2];
+  const head = [shoulder[0], shoulder[1] - BONE.neck - BONE.head];
   const stance = spec.stance ?? 14;
   return {
     view: "front",
@@ -309,9 +304,7 @@ function cableRig(post, end, color) {
   return `<rect x="${n(x)}" y="${n(top)}" width="6" height="${n(bottom - top)}" rx="2" fill="#d5dce3"/><rect x="${n(x - 5)}" y="${n(bottom - 3)}" width="16" height="4" rx="1" fill="#c5ced6"/><circle cx="${n(x + 3)}" cy="${n(y)}" r="5.5" fill="#f7f8f6" stroke="#7d8792" stroke-width="2"/><line x1="${n(x + 9)}" y1="${n(y)}" x2="${n(end[0])}" y2="${n(end[1])}" stroke="${color}" stroke-width="2.3"/><circle cx="${n(end[0])}" cy="${n(end[1])}" r="4.6" fill="none" stroke="${color}" stroke-width="2.2"/>`;
 }
 
-const FAR = "#8b939c";
-
-function bone(a, b, wa, wb, color) {
+function bone(a, b, wa, wb, color, edge = null) {
   const dx = b[0] - a[0];
   const dy = b[1] - a[1];
   const len = Math.hypot(dx, dy) || 1;
@@ -323,67 +316,80 @@ function bone(a, b, wa, wb, color) {
     [b[0] - px * wb / 2, b[1] - py * wb / 2],
     [a[0] - px * wa / 2, a[1] - py * wa / 2],
   ];
-  return `<path d="${p.map((pt, i) => `${i ? "L" : "M"}${n(pt[0])} ${n(pt[1])}`).join("")}Z" fill="${color}"/>`;
+  const stroke = edge ? ` stroke="${edge}" stroke-width="${edge === "#fff" ? 2.2 : 1.4}" stroke-linejoin="round"` : "";
+  return `<path d="${p.map((pt, i) => `${i ? "L" : "M"}${n(pt[0])} ${n(pt[1])}`).join("")}Z" fill="${color}"${stroke}/>`;
 }
 
-function disc(p, r, color) {
-  return `<circle cx="${n(p[0])}" cy="${n(p[1])}" r="${n(r)}" fill="${color}"/>`;
+function disc(p, r, color, edge = null) {
+  const stroke = edge ? ` stroke="${edge}" stroke-width="1.4"` : "";
+  return `<circle cx="${n(p[0])}" cy="${n(p[1])}" r="${n(r)}" fill="${color}"${stroke}/>`;
 }
 
-function filledLimb(limb, s, color, part = "both") {
+function filledLimb(limb, s, color, part = "both", face = 1) {
   if (!limb) return "";
+  const edge = color === FAR ? null : color === ARM ? "#fff" : EDGE;
   const parts = [];
   if (part !== "arm" && limb.hip && limb.knee && limb.ankle) {
-    const hipW = 17 * s;
-    const kneeW = 12 * s;
-    const ankleW = 7.5 * s;
-    const toeW = 4.5 * s;
-    parts.push(bone(limb.hip, limb.knee, hipW, kneeW, color));
-    parts.push(bone(limb.knee, limb.ankle, kneeW, ankleW, color));
-    if (limb.toe) parts.push(bone(limb.ankle, limb.toe, ankleW * 0.85, toeW, color));
-    parts.push(disc(limb.hip, hipW / 2, color));
-    parts.push(disc(limb.knee, kneeW / 2 + 0.4, color));
-    parts.push(disc(limb.ankle, ankleW / 2, color));
-    if (limb.toe) parts.push(disc(limb.toe, toeW / 2 + 0.3, color));
+    const hipW = 12.5 * s;
+    const kneeW = 9 * s;
+    const ankleW = 5.8 * s;
+    const toeW = 3.6 * s;
+    parts.push(bone(limb.hip, limb.knee, hipW, kneeW, color, edge));
+    parts.push(bone(limb.knee, limb.ankle, kneeW, ankleW, color, edge));
+    if (limb.toe) parts.push(bone(limb.ankle, limb.toe, ankleW * 0.85, toeW, color, edge));
+    parts.push(disc(limb.hip, hipW / 2.4, color));
+    parts.push(disc(limb.knee, kneeW / 2.3, color));
+    parts.push(disc(limb.ankle, ankleW / 2.1, color));
+    if (limb.toe) parts.push(disc(limb.toe, toeW / 2 + 0.2, color));
   }
   if (part !== "leg" && limb.shoulder && limb.elbow && limb.wrist) {
-    const shW = 12 * s;
-    const elW = 8.5 * s;
-    const wrW = 6 * s;
-    parts.push(bone(limb.shoulder, limb.elbow, shW, elW, color));
-    parts.push(bone(limb.elbow, limb.wrist, elW, wrW, color));
-    parts.push(disc(limb.elbow, elW / 2 + 0.3, color));
-    parts.push(disc(limb.wrist, wrW / 2 + 0.6, color));
+    const sh = limb.shoulder;
+    const el = limb.elbow;
+    const wr = limb.wrist;
+    const shW = 7.2 * s;
+    const elW = 5.6 * s;
+    const wrW = 4.4 * s;
+    parts.push(bone(sh, el, shW, elW, color, edge));
+    parts.push(bone(el, wr, elW, wrW, color, edge));
+    parts.push(disc(sh, shW / 2.5, color));
+    parts.push(disc(el, elW / 2.3, color));
+    parts.push(disc(wr, wrW / 2 + 0.2, color));
   }
   return parts.join("");
 }
 
 function filledTorso(joints, color) {
   const s = joints.scale || 1;
-  const neck = along(joints.shoulder, joints.head, 0.55);
+  const shR = 4.2 * s;
+  const headR = BONE.head * s;
+  const span = Math.hypot(joints.head[0] - joints.shoulder[0], joints.head[1] - joints.shoulder[1]) || 1;
+  const neckBase = along(joints.shoulder, joints.head, (shR + 1.5) / span);
+  const neckTop = along(joints.shoulder, joints.head, 1 - (headR + 1.5) / span);
   return [
-    bone(joints.shoulder, joints.hip, 22 * s, 16 * s, color),
-    bone(joints.shoulder, neck, 11 * s, 8 * s, color),
-    disc(joints.hip, 8 * s, color),
-    disc(joints.shoulder, 11 * s, color),
-    disc(joints.head, BONE.head * s, color),
+    bone(joints.shoulder, joints.hip, 12 * s, 10.5 * s, color),
+    disc(joints.hip, 5.2 * s, color),
+    disc(joints.shoulder, shR, color),
+    bone(neckBase, neckTop, 8 * s, 6.5 * s, LIMB, "#fff"),
+    disc(joints.head, headR, color, EDGE),
   ].join("");
 }
 
 function drawBody(joints) {
   const s = joints.scale || 1;
+  const face = joints.face || 1;
   const parts = [];
   if (joints.view === "front") {
-    parts.push(filledLimb(joints.left, s, BODY, "leg"));
-    parts.push(filledLimb(joints.right, s, BODY, "leg"));
+    parts.push(filledLimb(joints.left, s, LIMB, "leg", -1));
+    parts.push(filledLimb(joints.right, s, LIMB, "leg", 1));
     parts.push(filledTorso(joints, BODY));
-    parts.push(filledLimb(joints.left, s, BODY, "arm"));
-    parts.push(filledLimb(joints.right, s, BODY, "arm"));
+    parts.push(filledLimb(joints.left, s, ARM, "arm", -1));
+    parts.push(filledLimb(joints.right, s, ARM, "arm", 1));
   } else {
-    if (joints.drawFarLeg) parts.push(filledLimb(joints.far, s, FAR, "leg"));
-    if (joints.drawFarArm) parts.push(filledLimb(joints.far, s, FAR, "arm"));
+    if (joints.drawFarLeg) parts.push(filledLimb(joints.far, s, FAR, "leg", face));
+    if (joints.drawFarArm) parts.push(filledLimb(joints.far, s, FAR, "arm", face));
+    parts.push(filledLimb(joints.near, s, LIMB, "leg", face));
     parts.push(filledTorso(joints, BODY));
-    parts.push(filledLimb(joints.near, s, BODY));
+    parts.push(filledLimb(joints.near, s, ARM, "arm", face));
   }
   return parts.join("");
 }
