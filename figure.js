@@ -169,6 +169,37 @@ function scaleJoints(joints, cx, cy, s, tx, ty) {
   };
 }
 
+// Spin the whole body about the hip, so a front view can lie on its side.
+function turnJoints(joints, deg) {
+  if (!deg) return joints;
+  const [cx, cy] = joints.hip;
+  const [c, s] = polar(deg, 1);
+  const move = (p) => (p ? [cx + (p[0] - cx) * c - (p[1] - cy) * s, cy + (p[0] - cx) * s + (p[1] - cy) * c] : p);
+  const moveLimb = (limb) => {
+    if (!limb) return limb;
+    return {
+      hip: move(limb.hip),
+      knee: move(limb.knee),
+      ankle: move(limb.ankle),
+      toe: move(limb.toe),
+      shoulder: move(limb.shoulder),
+      elbow: move(limb.elbow),
+      wrist: move(limb.wrist),
+    };
+  };
+  return {
+    ...joints,
+    turn: deg,
+    hip: move(joints.hip),
+    shoulder: move(joints.shoulder),
+    head: move(joints.head),
+    far: moveLimb(joints.far),
+    near: moveLimb(joints.near),
+    left: moveLimb(joints.left),
+    right: moveLimb(joints.right),
+  };
+}
+
 function frame(joints, spec) {
   const box = { l: 58, t: 30, r: 202, b: spec.float ? 158 : 172 };
   const b = bounds(joints);
@@ -181,7 +212,7 @@ function frame(joints, spec) {
 }
 
 function solve(spec) {
-  if (spec.view === "front") return frame(solveFront(spec), spec);
+  if (spec.view === "front") return frame(turnJoints(solveFront(spec), spec.turn), spec);
   const face = spec.face ?? 1;
   const hip = spec.hip.slice();
   const torsoDir = -90 + face * (spec.torso || 0);
@@ -224,16 +255,20 @@ function solveFront(spec) {
 
 function markSegment(joints, mark) {
   const on = mark.on;
+  const tip = (from, dx, dy) => {
+    const [c, s] = polar(joints.turn || 0, 1);
+    return [from[0] + dx * c - dy * s, from[1] + dx * s + dy * c];
+  };
   if (on === "hip") {
     const face = joints.face || 1;
-    return [joints.hip, [joints.hip[0] - face * 14, joints.hip[1] - 6]];
+    return [joints.hip, tip(joints.hip, -face * 14, -6)];
   }
   if (on === "chest") return [along(joints.shoulder, joints.hip, 0.12), along(joints.shoulder, joints.hip, 0.48)];
   const [side, bone] = on.split(".");
   const limb = joints[side];
   if (bone === "hip") {
     const outward = side === "left" ? -1 : side === "right" ? 1 : -(joints.face || 1);
-    return [limb.hip, [limb.hip[0] + outward * 13, limb.hip[1] - 5]];
+    return [limb.hip, tip(limb.hip, outward * 13, -5)];
   }
   const ends = {
     thigh: ["hip", "knee"],
@@ -400,7 +435,10 @@ function figure(spec) {
   const parts = [];
   if (spec.floor != null) {
     const limbs = [joints.near, joints.drawFarLeg === false ? null : joints.far, joints.left, joints.right].filter((limb) => limb && limb.ankle);
-    const sole = Math.max(...limbs.map((limb) => Math.max(limb.ankle[1], limb.toe[1])));
+    // A lying body rests on its legs, not on its soles.
+    const sole = spec.lie
+      ? Math.max(...limbs.flatMap((limb) => [limb.hip, limb.knee, limb.ankle, limb.toe].map((p) => p[1]))) - 4
+      : Math.max(...limbs.map((limb) => Math.max(limb.ankle[1], limb.toe[1])));
     const floorY = spec.float ? Math.min(190, sole + spec.float) : Math.min(190, sole + 10);
     parts.push(floorLine(floorY));
     if (spec.float) parts.push(shadow((joints.hip[0]), floorY - 2));
