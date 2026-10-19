@@ -122,7 +122,7 @@ const categories = [
         dose: "4 × 3",
         cue: "Body stays one line. Hands leave the floor together.",
         marks: [
-          { on: "chest", t: "Chest", place: "tl" },
+          { on: "chest", t: "Chest", place: "bl" },
           { on: "near.upper", t: "Triceps", place: "tr", tone: "deep" },
         ],
         build: poseClapPushup,
@@ -363,14 +363,14 @@ function poseThoracicRoll(color, marks, marker) {
     floor: 180,
     farLeg: false,
     farArm: false,
-    near: { hip: -100, knee: -70, shoulder: -40, elbow: 100, foot: 12 },
+    near: { hip: -100, knee: -70, shoulder: 150, elbow: -110, foot: 12 },
     behind(j) {
       const back = along(j.shoulder, j.hip, 0.35);
       return roller(back[0], back[1] + 12, 15);
     },
   }, {
     torso: 82,
-    near: { hip: -108, knee: -40, shoulder: -8, elbow: 70, foot: 8 },
+    near: { hip: -108, knee: -40, shoulder: 130, elbow: -110, foot: 8 },
   }, {});
 }
 
@@ -426,17 +426,18 @@ function poseClapPushup(color, marks, marker) {
     marker,
     face: -1,
     hip: [150, 108],
-    torso: 78,
+    torso: 67,
     plant: 168,
     floor: 176,
     gap: 7,
     farLeg: false,
-    near: { hip: -82, knee: 4, shoulder: 8, elbow: 28, foot: 10 },
-    far: { shoulder: 4, elbow: 24 },
-  }, {
-    near: { hip: -82, knee: 8, shoulder: 18, elbow: 95, foot: 8 },
-    far: { shoulder: 14, elbow: 90 },
-  }, {});
+    near: { hip: -67, knee: 0, shoulder: 0, elbow: 0, foot: 20 },
+    far: { shoulder: -4, elbow: 0 },
+  }, {}, {
+    torso: 58,
+    near: { hip: -58, knee: 0, shoulder: 18, elbow: 24, foot: 20 },
+    far: { shoulder: 14, elbow: 28 },
+  });
 }
 
 function poseHipRoll(color, marks, marker) {
@@ -446,18 +447,18 @@ function poseHipRoll(color, marks, marker) {
     marker,
     face: -1,
     hip: [146, 128],
-    torso: 68,
+    torso: 80,
     plant: 174,
     floor: 178,
     farLeg: false,
     farArm: false,
-    near: { hip: -115, knee: -65, shoulder: 8, elbow: 6, foot: 18 },
+    near: { hip: -115, knee: -65, shoulder: 0, elbow: 90, foot: 18 },
     behind(j) {
       return medball(j.hip[0] + 2, j.hip[1] + 12, 16);
     },
   }, {
     torso: 88,
-    near: { hip: -96, knee: -30, shoulder: 4, elbow: 4, foot: 10 },
+    near: { hip: -96, knee: -30, shoulder: 0, elbow: 90, foot: 10 },
   }, {});
 }
 
@@ -497,7 +498,7 @@ function poseDoubleClam(color, marks, marker) {
     stance: 7,
     floor: 186,
     left: { abd: 0, knee: -28, out: 20, elbow: 30, foot: 120 },
-    right: { abd: 0, knee: 28, out: 185, elbow: 0, foot: 60 },
+    right: { abd: 0, knee: 28, out: 180, elbow: -160, foot: 60 },
   }, {}, {
     left: { abd: 34, knee: 56, out: 20, elbow: 30, foot: 60 },
   });
