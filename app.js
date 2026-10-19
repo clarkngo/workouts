@@ -36,14 +36,51 @@ const categories = [
   {
     id: "plyometrics",
     title: "Plyometrics",
-    kicker: "Bounce and land",
-    target: "Quads, glutes",
+    kicker: "Warm-up to basics, bodyweight",
+    target: "Calves, quads, glutes",
     color: "#ef5a3c",
     ink: "#c2412c",
     exercises: [
       {
-        id: "squat-jump",
+        id: "pogo-hop",
         n: 1,
+        stage: "Warm-up",
+        name: "Pogo hops",
+        dose: "2 × 20",
+        cue: "Stiff ankles. Small, quick hops on the balls of the feet.",
+        marks: [{ on: "near.shin", t: "Calves", place: "tr" }],
+        build: posePogo,
+      },
+      {
+        id: "a-skip",
+        n: 2,
+        stage: "Warm-up",
+        name: "A-skip",
+        dose: "2 × 15 m",
+        cue: "Drive one knee up, opposite arm forward. Land under the hip.",
+        marks: [
+          { on: "near.thigh", t: "Hip flexors", place: "tr" },
+          { on: "far.shin", t: "Calves", place: "bl", tone: "deep" },
+        ],
+        build: poseASkip,
+      },
+      {
+        id: "snap-down",
+        n: 3,
+        stage: "Basics",
+        name: "Snap-down",
+        dose: "3 × 5",
+        cue: "Tall on the toes, arms up. Snap down to a quiet half squat.",
+        marks: [
+          { on: "near.thigh", t: "Quads", place: "tr" },
+          { on: "hip", t: "Glutes", place: "tl", tone: "deep" },
+        ],
+        build: poseSnapDown,
+      },
+      {
+        id: "squat-jump",
+        n: 4,
+        stage: "Basics",
         name: "Squat jump",
         dose: "5 × 3",
         cue: "Drop fast. Jump tall. Land soft on the whole foot.",
@@ -54,8 +91,22 @@ const categories = [
         build: poseSquatJump,
       },
       {
+        id: "split-jump",
+        n: 5,
+        stage: "Basics",
+        name: "Split jump",
+        dose: "3 × 3 each leg",
+        cue: "Lunge stance. Jump, switch legs in the air, land soft.",
+        marks: [
+          { on: "near.thigh", t: "Quads", place: "tr" },
+          { on: "hip", t: "Glutes", place: "tl", tone: "deep" },
+        ],
+        build: poseSplitJump,
+      },
+      {
         id: "lateral-bound",
-        n: 2,
+        n: 6,
+        stage: "Basics",
         name: "Lateral bound",
         dose: "3 × 3 each way",
         cue: "Push the ground away. Stick the landing.",
@@ -327,6 +378,81 @@ function poseSquatJump(color, marks, marker) {
     near: { hip: 48, knee: 78, shoulder: -28, elbow: 20, foot: 8 },
     far: { hip: 40, knee: 74, shoulder: -22, elbow: 16, foot: 8 },
   }, {});
+}
+
+function posePogo(color, marks, marker) {
+  return phases({
+    color,
+    marks,
+    marker,
+    face: 1,
+    hip: [124, 100],
+    torso: 2,
+    floor: 190,
+    gap: 3,
+    near: { hip: 2, knee: 4, shoulder: 12, elbow: 80, foot: 36 },
+    far: { hip: -2, knee: 4, shoulder: 6, elbow: 80, foot: 36 },
+  }, {}, {
+    float: 16,
+    near: { hip: 0, knee: 2, shoulder: 18, elbow: 70, foot: 50 },
+    far: { hip: -3, knee: 2, shoulder: 10, elbow: 70, foot: 50 },
+  });
+}
+
+function poseASkip(color, marks, marker) {
+  return phases({
+    color,
+    marks,
+    marker,
+    face: 1,
+    hip: [124, 100],
+    torso: 2,
+    floor: 190,
+    gap: 3,
+    near: { hip: 30, knee: 34, shoulder: 30, elbow: 70, foot: 30 },
+    far: { hip: -6, knee: 6, shoulder: -24, elbow: 70, foot: 24 },
+  }, {}, {
+    float: 8,
+    near: { hip: 88, knee: 96, shoulder: -34, elbow: 70, foot: 10 },
+    far: { hip: -4, knee: 6, shoulder: 50, elbow: 80, foot: 34 },
+  });
+}
+
+function poseSnapDown(color, marks, marker) {
+  return phases({
+    color,
+    marks,
+    marker,
+    face: 1,
+    hip: [124, 100],
+    torso: 0,
+    floor: 190,
+    gap: 3,
+    near: { hip: 0, knee: 0, shoulder: 172, elbow: 0, foot: 40 },
+    far: { hip: -2, knee: 0, shoulder: 168, elbow: 0, foot: 40 },
+  }, {}, {
+    torso: 30,
+    near: { hip: 42, knee: 72, shoulder: -34, elbow: 12, foot: 4 },
+    far: { hip: 36, knee: 66, shoulder: -28, elbow: 10, foot: 4 },
+  });
+}
+
+function poseSplitJump(color, marks, marker) {
+  return phases({
+    color,
+    marks,
+    marker,
+    face: 1,
+    hip: [124, 108],
+    torso: 0,
+    floor: 190,
+    gap: 4,
+    near: { hip: 82, knee: 86, shoulder: -24, elbow: 30, foot: 0 },
+    far: { hip: -14, knee: 76, shoulder: 26, elbow: 30, foot: 150 },
+  }, {}, {
+    near: { hip: -14, knee: 76, shoulder: 26, elbow: 30, foot: 150 },
+    far: { hip: 82, knee: 86, shoulder: -24, elbow: 30, foot: 0 },
+  });
 }
 
 function poseLateralBound(color, marks, marker) {
@@ -628,7 +754,7 @@ function cardHtml(exercise, category) {
       <div class="phase">${figureSvg(`${exercise.name}, finish`, phases.finish)}<span>Finish</span></div>
     </div>
     <div class="title-row"><span></span><h3>${esc(exercise.name)}</h3><span class="n">${exercise.n}.</span></div>
-    <p class="dose">${esc(exercise.dose)}</p>
+    <p class="dose">${exercise.stage ? `<b class="stage-tag">${esc(exercise.stage)}</b>` : ""}${esc(exercise.dose)}</p>
     <p class="cue">${esc(exercise.cue)}</p>
   </article>`;
 }
