@@ -164,6 +164,64 @@ const categories = [
     ],
   },
   {
+    id: "hip-mobility",
+    title: "Hip mobility",
+    kicker: "Floor only, no machine",
+    target: "Hips, glutes",
+    color: "#7e57c2",
+    ink: "#5b3a9e",
+    exercises: [
+      {
+        id: "double-clamshell",
+        n: 1,
+        name: "Double clamshell",
+        dose: "2 × 10 each side",
+        cue: "Lie on your side. Lift both feet, then open the top knee. Hips stay stacked.",
+        marks: [
+          { on: "left.hip", t: "Glute med", place: "tl" },
+          { on: "left.thigh", t: "Hip rotators", place: "tr", tone: "deep" },
+        ],
+        build: poseDoubleClam,
+      },
+      {
+        id: "hip-flexor-stretch",
+        n: 2,
+        name: "Half-kneeling hip flexor",
+        dose: "45 sec each side",
+        cue: "Back knee down. Squeeze that glute and shift the hips forward.",
+        marks: [
+          { on: "far.thigh", t: "Hip flexors", place: "bl" },
+          { on: "hip", t: "Glutes", place: "tl", tone: "deep" },
+        ],
+        build: poseHipFlexor,
+      },
+      {
+        id: "cossack-squat",
+        n: 3,
+        name: "Cossack squat",
+        dose: "2 × 6 each side",
+        cue: "Wide stance. Sit into one hip. Straight leg, toes up.",
+        marks: [
+          { on: "left.thigh", t: "Adductors", place: "tl" },
+          { on: "right.hip", t: "Glutes", place: "tr", tone: "deep" },
+        ],
+        build: poseCossack,
+      },
+      {
+        id: "glute-bridge",
+        n: 4,
+        name: "Glute bridge",
+        dose: "2 × 12",
+        cue: "Feet flat. Drive through the heels. Pause with the hips high.",
+        marks: [
+          { on: "hip", t: "Glutes", place: "tl" },
+          { on: "near.thigh", t: "Hamstrings", place: "tr", tone: "deep" },
+        ],
+        build: poseBridge,
+      },
+    ],
+  },
+  {
     id: "kettlebell",
     title: "Kettlebell",
     kicker: "Strength and snap",
@@ -424,6 +482,81 @@ function poseFigure4(color, marks, marker) {
     near: { hip: 42, knee: 48, shoulder: 10, elbow: 8, foot: 2 },
     far: { hip: 70, knee: 110, foot: 20 },
   }, {});
+}
+
+function poseDoubleClam(color, marks, marker) {
+  // Front view laid on the right side, head on the bottom arm. Left is the top leg.
+  return phases({
+    view: "front",
+    color,
+    marks,
+    marker,
+    turn: 90,
+    lie: true,
+    hip: [130, 100],
+    stance: 7,
+    floor: 186,
+    left: { abd: 0, knee: -28, out: 20, elbow: 30, foot: 120 },
+    right: { abd: 0, knee: 28, out: 185, elbow: 0, foot: 60 },
+  }, {}, {
+    left: { abd: 34, knee: 56, out: 20, elbow: 30, foot: 60 },
+  });
+}
+
+function poseHipFlexor(color, marks, marker) {
+  return phases({
+    color,
+    marks,
+    marker,
+    face: 1,
+    hip: [118, 110],
+    torso: 0,
+    floor: 186,
+    gap: 4,
+    near: { hip: 85, knee: 87, shoulder: 4, elbow: 10, foot: 0 },
+    far: { hip: -10, knee: 80, shoulder: 2, elbow: 8, foot: 170 },
+  }, {}, {
+    torso: -6,
+    near: { hip: 88, knee: 90, shoulder: 170, elbow: 6, foot: 0 },
+    far: { hip: -22, knee: 68, shoulder: 166, elbow: 6, foot: 170 },
+  });
+}
+
+function poseCossack(color, marks, marker) {
+  return phases({
+    view: "front",
+    color,
+    marks,
+    marker,
+    hip: [130, 100],
+    stance: 14,
+    floor: 186,
+    left: { abd: 22, knee: 0, out: 12, elbow: 4, foot: 0 },
+    right: { abd: 22, knee: 0, out: 12, elbow: 4, foot: 0 },
+  }, {}, {
+    left: { abd: 54, knee: 0, out: 30, elbow: 70, foot: 0 },
+    right: { abd: 70, knee: 100, out: 30, elbow: 70, foot: 0 },
+  });
+}
+
+function poseBridge(color, marks, marker) {
+  return phases({
+    color,
+    marks,
+    marker,
+    face: 1,
+    lie: true,
+    hip: [140, 120],
+    torso: -98,
+    floor: 186,
+    gap: 4,
+    near: { hip: 128, knee: 135, shoulder: 93, elbow: 0, foot: 0 },
+    far: { hip: 124, knee: 131, shoulder: 92, elbow: 0, foot: 0 },
+  }, {}, {
+    torso: -105,
+    near: { hip: 110, knee: 120, shoulder: 85, elbow: 0, foot: 0 },
+    far: { hip: 106, knee: 116, shoulder: 84, elbow: 0, foot: 0 },
+  });
 }
 
 function poseSwing(color, marks, marker) {
