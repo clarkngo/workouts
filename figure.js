@@ -212,7 +212,11 @@ function frame(joints, spec) {
 }
 
 function solve(spec) {
-  if (spec.view === "front") return frame(turnJoints(solveFront(spec), spec.turn), spec);
+  return frame(solveRaw(spec), spec);
+}
+
+function solveRaw(spec) {
+  if (spec.view === "front") return turnJoints(solveFront(spec), spec.turn);
   const face = spec.face ?? 1;
   const hip = spec.hip.slice();
   const torsoDir = -90 + face * (spec.torso || 0);
@@ -224,7 +228,7 @@ function solve(spec) {
   const far = limbSide(farHip, farShoulder, spec.far || {}, face);
   if (spec.farLeg === false) far.hip = far.knee = far.ankle = far.toe = null;
   if (spec.farArm === false) far.shoulder = far.elbow = far.wrist = null;
-  return frame({
+  return {
     view: "side",
     face,
     hip,
@@ -234,7 +238,7 @@ function solve(spec) {
     near: limbSide(hip, shoulder, spec.near || {}, face),
     drawFarLeg: spec.farLeg !== false,
     drawFarArm: spec.farArm !== false,
-  }, spec);
+  };
 }
 
 function solveFront(spec) {
@@ -429,16 +433,59 @@ function drawBody(joints) {
   return parts.join("");
 }
 
+function soleOf(joints, spec) {
+  const limbs = [joints.near, joints.drawFarLeg === false ? null : joints.far, joints.left, joints.right].filter((limb) => limb && limb.ankle);
+  // A lying body rests on its legs, not on its soles.
+  return spec.lie
+    ? Math.max(...limbs.flatMap((limb) => [limb.hip, limb.knee, limb.ankle, limb.toe].map((p) => p[1]))) - 4
+    : Math.max(...limbs.map((limb) => Math.max(limb.ankle[1], limb.toe[1])));
+}
+
+// Motion: blend poses and keep one frame and one floor for every step,
+// so the figure moves instead of rescaling.
+
+function tween(a, b, t) {
+  if (typeof a === "number" || typeof b === "number") return (a || 0) + ((b || 0) - (a || 0)) * t;
+  if (Array.isArray(a) && Array.isArray(b)) return a.map((v, i) => tween(v, b[i], t));
+  if (a && b && typeof a === "object" && typeof b === "object") {
+    const out = {};
+    for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) out[key] = tween(a[key], b[key], t);
+    return out;
+  }
+  return a === undefined ? b : a;
+}
+
+// Raw joints with the floor moved to y = 0.
+function grounded(spec) {
+  const raw = solveRaw(spec);
+  return translate(raw, 0, -(soleOf(raw, spec) + (spec.float || 10)));
+}
+
+function fitMotion(keys) {
+  const pts = [];
+  keys.forEach((key, i) => {
+    const next = keys[i + 1] || key;
+    for (let step = 0; step < 4; step++) pts.push(...collectPoints(grounded(tween(key, next, step / 4))));
+  });
+  const minX = Math.min(...pts.map((p) => p[0]));
+  const maxX = Math.max(...pts.map((p) => p[0]));
+  const minY = Math.min(...pts.map((p) => p[1]));
+  const floorY = 178;
+  const s = Math.min(1, 300 / Math.max(maxX - minX, 1), (floorY - 22) / Math.max(-minY, 1));
+  return { cx: (minX + maxX) / 2, s, floorY };
+}
+
 function figure(spec) {
-  const joints = solve(spec);
+  const joints = spec.fit
+    ? scaleJoints(grounded(spec), spec.fit.cx, 0, spec.fit.s, 130, spec.fit.floorY)
+    : solve(spec);
   const color = spec.color;
   const parts = [];
-  if (spec.floor != null) {
-    const limbs = [joints.near, joints.drawFarLeg === false ? null : joints.far, joints.left, joints.right].filter((limb) => limb && limb.ankle);
-    // A lying body rests on its legs, not on its soles.
-    const sole = spec.lie
-      ? Math.max(...limbs.flatMap((limb) => [limb.hip, limb.knee, limb.ankle, limb.toe].map((p) => p[1]))) - 4
-      : Math.max(...limbs.map((limb) => Math.max(limb.ankle[1], limb.toe[1])));
+  if (spec.fit) {
+    parts.push(floorLine(spec.fit.floorY));
+    if (spec.float > 2) parts.push(shadow(joints.hip[0], spec.fit.floorY - 2));
+  } else if (spec.floor != null) {
+    const sole = soleOf(joints, spec);
     const floorY = spec.float ? Math.min(190, sole + spec.float) : Math.min(190, sole + 10);
     parts.push(floorLine(floorY));
     if (spec.float) parts.push(shadow((joints.hip[0]), floorY - 2));

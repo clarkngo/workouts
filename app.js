@@ -37,6 +37,7 @@ const categories = [
     id: "plyometrics",
     title: "Plyometrics",
     kicker: "Warm-up to basics, bodyweight",
+    animated: true,
     target: "Calves, quads, glutes",
     color: "#ef5a3c",
     ink: "#c2412c",
@@ -308,10 +309,13 @@ const categories = [
   },
 ];
 
-function phases(base, start, finish) {
+// mids are in-between poses for the animation only, start to finish.
+function phases(base, start, finish, mids = []) {
   return {
     start: figure({ ...base, ...start, marks: [] }),
     finish: figure({ ...base, ...finish }),
+    keys: [start, ...mids, finish].map((pose) => ({ ...base, ...pose, marks: [] })),
+    marks: base.marks,
   };
 }
 
@@ -377,7 +381,12 @@ function poseSquatJump(color, marks, marker) {
     torso: 12,
     near: { hip: 48, knee: 78, shoulder: -28, elbow: 20, foot: 8 },
     far: { hip: 40, knee: 74, shoulder: -22, elbow: 16, foot: 8 },
-  }, {});
+  }, {}, [{
+    float: 6,
+    torso: 0,
+    near: { hip: 2, knee: 4, shoulder: 150, elbow: 4, foot: 40 },
+    far: { hip: -2, knee: 4, shoulder: 146, elbow: 4, foot: 40 },
+  }]);
 }
 
 function posePogo(color, marks, marker) {
@@ -452,7 +461,11 @@ function poseSplitJump(color, marks, marker) {
   }, {}, {
     near: { hip: -14, knee: 76, shoulder: 26, elbow: 30, foot: 150 },
     far: { hip: 82, knee: 86, shoulder: -24, elbow: 30, foot: 0 },
-  });
+  }, [{
+    float: 24,
+    near: { hip: 34, knee: 40, shoulder: 0, elbow: 30, foot: 30 },
+    far: { hip: 28, knee: 50, shoulder: 0, elbow: 30, foot: 40 },
+  }]);
 }
 
 function poseLateralBound(color, marks, marker) {
@@ -746,12 +759,21 @@ function figureSvg(label, inner) {
   return `<svg viewBox="0 0 260 200" role="img" aria-label="${esc(label)}">${inner}</svg>`;
 }
 
+function stillsHtml(exercise, phases) {
+  return `
+      <div class="phase">${figureSvg(`${exercise.name}, start`, phases.start)}<span>Start</span></div>
+      <div class="phase">${figureSvg(`${exercise.name}, finish`, phases.finish)}<span>Finish</span></div>`;
+}
+
 function cardHtml(exercise, category) {
   const phases = exercise.build(category.color, exercise.marks, `mk-${exercise.id}`);
-  return `<article class="card" id="${exercise.id}" style="--accent:${category.color}">
+  const play = category.animated
+    ? `<button type="button" class="play" data-play="${exercise.id}" aria-pressed="false" aria-label="Play ${esc(exercise.name)}">Play</button>`
+    : "";
+  return `<article class="card${category.animated ? " animated" : ""}" id="${exercise.id}" style="--accent:${category.color}">
+    ${play}
     <div class="stage pair">
-      <div class="phase">${figureSvg(`${exercise.name}, start`, phases.start)}<span>Start</span></div>
-      <div class="phase">${figureSvg(`${exercise.name}, finish`, phases.finish)}<span>Finish</span></div>
+      ${stillsHtml(exercise, phases)}
     </div>
     <div class="title-row"><span></span><h3>${esc(exercise.name)}</h3><span class="n">${exercise.n}.</span></div>
     <p class="dose">${exercise.stage ? `<b class="stage-tag">${esc(exercise.stage)}</b>` : ""}${esc(exercise.dose)}</p>
@@ -819,7 +841,104 @@ function applyFilter(id) {
   status.textContent = `Showing ${category.title}`;
 }
 
+// Plays start to finish and back. A click plays three times; a hover plays
+// until the mouse leaves. Then the card returns to the stills.
+const HOLD_START = 320;
+const STEP = 360;
+const HOLD_FINISH = 520;
+const LOOPS = 3;
+const players = new Map();
+
+function ease(t) {
+  return t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+}
+
+function poseAt(keys, ms) {
+  const path = [...keys.keys(), ...[...keys.keys()].reverse().slice(1, -1)];
+  const spans = path.map((at) => (at === 0 ? HOLD_START : at === keys.length - 1 ? HOLD_FINISH : 0) + STEP);
+  const cycle = spans.reduce((sum, span) => sum + span, 0);
+  let t = ms % cycle;
+  for (let i = 0; i < path.length; i++) {
+    const from = path[i];
+    const to = path[(i + 1) % path.length];
+    const hold = spans[i] - STEP;
+    if (t < spans[i]) {
+      if (t < hold) return { spec: keys[from], at: from };
+      return { spec: tween(keys[from], keys[to], ease((t - hold) / STEP)), at: -1 };
+    }
+    t -= spans[i];
+  }
+  return { spec: keys[0], at: 0 };
+}
+
+function cycleLength(keys) {
+  return HOLD_START + HOLD_FINISH + STEP * 2 * (keys.length - 1);
+}
+
+function stopPlay(id) {
+  const player = players.get(id);
+  if (!player) return;
+  cancelAnimationFrame(player.raf);
+  players.delete(id);
+  const { card, exercise, phases } = player;
+  card.querySelector(".stage").innerHTML = stillsHtml(exercise, phases);
+  card.querySelector(".stage").classList.remove("playing");
+  const button = card.querySelector(".play");
+  button.textContent = "Play";
+  button.setAttribute("aria-pressed", "false");
+}
+
+function startPlay(id, loops = LOOPS, by = "click") {
+  const category = categories.find((item) => item.exercises.some((exercise) => exercise.id === id));
+  const exercise = category.exercises.find((item) => item.id === id);
+  const phases = exercise.build(category.color, exercise.marks, `mk-${exercise.id}`);
+  const fit = fitMotion(phases.keys);
+  const card = document.getElementById(id);
+  const stage = card.querySelector(".stage");
+  stage.classList.add("playing");
+  stage.innerHTML = `<div class="phase wide"><svg viewBox="-130 0 520 200" role="img" aria-label="${esc(exercise.name)}, moving"></svg><span>Start to finish</span></div>`;
+  const svg = stage.querySelector("svg");
+  const button = card.querySelector(".play");
+  button.textContent = "Stop";
+  button.setAttribute("aria-pressed", "true");
+  const player = { card, exercise, phases, raf: 0, by };
+  players.set(id, player);
+  const total = cycleLength(phases.keys) * loops;
+  const t0 = performance.now();
+  const tick = (now) => {
+    const ms = now - t0;
+    if (ms >= total) return stopPlay(id);
+    const { spec, at } = poseAt(phases.keys, ms);
+    const marks = at === phases.keys.length - 1 ? phases.marks : [];
+    svg.innerHTML = figure({ ...spec, fit, marks });
+    player.raf = requestAnimationFrame(tick);
+  };
+  player.raf = requestAnimationFrame(tick);
+}
+
+function wirePlayback() {
+  document.querySelector("#routines").addEventListener("click", (event) => {
+    const card = event.target.closest(".card.animated");
+    if (!card) return;
+    const player = players.get(card.id);
+    if (player && player.by === "click") stopPlay(card.id);
+    else {
+      stopPlay(card.id);
+      startPlay(card.id);
+    }
+  });
+  document.querySelectorAll(".card.animated").forEach((card) => {
+    card.addEventListener("pointerenter", (event) => {
+      if (event.pointerType === "mouse" && !players.has(card.id)) startPlay(card.id, Infinity, "hover");
+    });
+    card.addEventListener("pointerleave", (event) => {
+      if (event.pointerType === "mouse" && players.get(card.id)?.by === "hover") stopPlay(card.id);
+    });
+  });
+}
+
 renderFilters();
 renderBoard();
+wirePlayback();
 applyFilter(currentFilter());
 window.addEventListener("hashchange", () => applyFilter(currentFilter()));
