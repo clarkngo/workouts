@@ -176,7 +176,7 @@ h1 {
 
 .card { position: relative; }
 
-.card.animated { cursor: pointer; }
+.card { cursor: pointer; }
 
 .play {
   position: absolute;
