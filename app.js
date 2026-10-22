@@ -37,7 +37,6 @@ const categories = [
     id: "plyometrics",
     title: "Plyometrics",
     kicker: "Warm-up to basics, bodyweight",
-    animated: true,
     target: "Calves, quads, glutes",
     color: "#ef5a3c",
     ink: "#c2412c",
@@ -640,7 +639,9 @@ function poseDoubleClam(color, marks, marker) {
     right: { abd: 0, knee: 28, out: 180, elbow: -160, foot: 60 },
   }, {}, {
     left: { abd: 34, knee: 56, out: 20, elbow: 30, foot: 60 },
-  });
+  }, [{
+    left: { abd: 16, knee: 14, out: 20, elbow: 30, foot: 90 },
+  }]);
 }
 
 function poseHipFlexor(color, marks, marker) {
@@ -767,10 +768,8 @@ function stillsHtml(exercise, phases) {
 
 function cardHtml(exercise, category) {
   const phases = exercise.build(category.color, exercise.marks, `mk-${exercise.id}`);
-  const play = category.animated
-    ? `<button type="button" class="play" data-play="${exercise.id}" aria-pressed="false" aria-label="Play ${esc(exercise.name)}">Play</button>`
-    : "";
-  return `<article class="card${category.animated ? " animated" : ""}" id="${exercise.id}" style="--accent:${category.color}">
+  const play = `<button type="button" class="play" data-play="${exercise.id}" aria-pressed="false" aria-label="Play ${esc(exercise.name)}">Play</button>`;
+  return `<article class="card" id="${exercise.id}" style="--accent:${category.color}">
     ${play}
     <div class="stage pair">
       ${stillsHtml(exercise, phases)}
@@ -842,7 +841,8 @@ function applyFilter(id) {
 }
 
 // Plays start to finish and back. A click plays three times; a hover plays
-// until the mouse leaves. Then the card returns to the stills.
+// until the mouse leaves. On touch screens the card in the middle of the
+// screen plays, one at a time. Then the card returns to the stills.
 const HOLD_START = 320;
 const STEP = 360;
 const HOLD_FINISH = 520;
@@ -917,17 +917,19 @@ function startPlay(id, loops = LOOPS, by = "click") {
 }
 
 function wirePlayback() {
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const paused = new Set();
   document.querySelector("#routines").addEventListener("click", (event) => {
-    const card = event.target.closest(".card.animated");
+    const card = event.target.closest(".card");
     if (!card) return;
     const player = players.get(card.id);
-    if (player && player.by === "click") stopPlay(card.id);
-    else {
-      stopPlay(card.id);
-      startPlay(card.id);
-    }
+    stopPlay(card.id);
+    // A tap pauses the scrolling autoplay until the card leaves the middle.
+    if (player && player.by === "view") paused.add(card.id);
+    else if (!player || player.by !== "click") startPlay(card.id);
   });
-  document.querySelectorAll(".card.animated").forEach((card) => {
+  if (still) return;
+  document.querySelectorAll(".card").forEach((card) => {
     card.addEventListener("pointerenter", (event) => {
       if (event.pointerType === "mouse" && !players.has(card.id)) startPlay(card.id, Infinity, "hover");
     });
@@ -935,6 +937,21 @@ function wirePlayback() {
       if (event.pointerType === "mouse" && players.get(card.id)?.by === "hover") stopPlay(card.id);
     });
   });
+  if (!matchMedia("(hover: none)").matches) return;
+  const middle = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      const id = entry.target.id;
+      if (!entry.isIntersecting) {
+        paused.delete(id);
+        if (players.get(id)?.by === "view") stopPlay(id);
+        continue;
+      }
+      if (paused.has(id) || players.has(id)) continue;
+      for (const [other, player] of players) if (player.by === "view") stopPlay(other);
+      startPlay(id, Infinity, "view");
+    }
+  }, { rootMargin: "-45% 0px -45% 0px" });
+  document.querySelectorAll(".card").forEach((card) => middle.observe(card));
 }
 
 renderFilters();
