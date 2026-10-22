@@ -481,16 +481,19 @@ function figure(spec) {
     : solve(spec);
   const color = spec.color;
   const parts = [];
+  let floorY;
   if (spec.fit) {
-    parts.push(floorLine(spec.fit.floorY));
-    if (spec.float > 2) parts.push(shadow(joints.hip[0], spec.fit.floorY - 2));
+    floorY = spec.fit.floorY;
+    parts.push(floorLine(floorY));
+    if (spec.float > 2) parts.push(shadow(joints.hip[0], floorY - 2));
   } else if (spec.floor != null) {
     const sole = soleOf(joints, spec);
-    const floorY = spec.float ? Math.min(190, sole + spec.float) : Math.min(190, sole + 10);
+    floorY = spec.float ? Math.min(190, sole + spec.float) : Math.min(190, sole + 10);
     parts.push(floorLine(floorY));
     if (spec.float) parts.push(shadow((joints.hip[0]), floorY - 2));
   }
-  if (spec.behind) parts.push(spec.behind(joints, color));
+  // Props get the floor so rollers and balls rest on it.
+  if (spec.behind) parts.push(spec.behind(joints, color, floorY));
   parts.push(drawBody(joints));
   if (spec.front) parts.push(spec.front(joints, color));
   const labels = [];

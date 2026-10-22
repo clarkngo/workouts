@@ -496,18 +496,18 @@ function poseThoracicRoll(color, marks, marker) {
     marker,
     face: -1,
     hip: [168, 150],
-    torso: 62,
+    torso: 91,
     plant: 176,
     floor: 180,
     farLeg: false,
     farArm: false,
     near: { hip: -100, knee: -70, shoulder: 150, elbow: -110, foot: 12 },
-    behind(j) {
+    behind(j, ink, floorY) {
       const back = along(j.shoulder, j.hip, 0.35);
-      return roller(back[0], back[1] + 12, 15);
+      return roller(back[0], floorY - 15, 15);
     },
   }, {
-    torso: 82,
+    torso: 46,
     near: { hip: -108, knee: -40, shoulder: 130, elbow: -110, foot: 8 },
   }, {});
 }
@@ -523,16 +523,16 @@ function poseGluteRoll(color, marks, marker) {
     plant: 180,
     floor: 184,
     gap: 4,
-    near: { hip: 62, knee: 48, shoulder: 48, elbow: 16, foot: 8 },
-    far: { hip: 88, knee: 108, shoulder: 20, elbow: 10, foot: 20 },
+    near: { hip: 104, knee: 109, shoulder: 40, elbow: 30, foot: 0 },
+    far: { hip: 125, knee: 150, foot: 20 },
     farArm: false,
-    behind(j) {
-      return roller(j.hip[0] + 4, j.hip[1] + 14, 15);
+    behind(j, ink, floorY) {
+      return roller(j.hip[0] + 4, floorY - 15, 15);
     },
   }, {
-    torso: -8,
-    near: { hip: 40, knee: 28, shoulder: 20, elbow: 10, foot: 4 },
-    far: { hip: 48, knee: 36, shoulder: 16, elbow: 8, foot: 6 },
+    torso: -20,
+    near: { hip: 104, knee: 107, shoulder: 30, elbow: 30, foot: 0 },
+    far: { hip: 128, knee: 152, foot: 20 },
   }, {});
 }
 
@@ -590,13 +590,13 @@ function poseHipRoll(color, marks, marker) {
     floor: 178,
     farLeg: false,
     farArm: false,
-    near: { hip: -115, knee: -65, shoulder: 0, elbow: 90, foot: 18 },
-    behind(j) {
-      return medball(j.hip[0] + 2, j.hip[1] + 12, 16);
+    near: { hip: -99, knee: -65, shoulder: 0, elbow: 90, foot: 18 },
+    behind(j, ink, floorY) {
+      return medball(j.hip[0] + 2, floorY - 16, 16);
     },
   }, {
     torso: 88,
-    near: { hip: -96, knee: -30, shoulder: 0, elbow: 90, foot: 10 },
+    near: { hip: -84, knee: -30, shoulder: 0, elbow: 90, foot: 10 },
   }, {});
 }
 
@@ -607,19 +607,19 @@ function poseFigure4(color, marks, marker) {
     marker,
     face: 1,
     hip: [124, 118],
-    torso: 6,
+    torso: 30,
     floor: 184,
     gap: 2,
     farArm: false,
-    near: { hip: 68, knee: 76, shoulder: 18, elbow: 12, foot: 4 },
-    far: { hip: 102, knee: 148, foot: 40 },
-    behind(j) {
-      return medball(j.hip[0] - 2, j.hip[1] + 12, 16);
+    near: { hip: 101, knee: 103, shoulder: 30, elbow: 12, foot: 0 },
+    far: { hip: 125, knee: 150, foot: 20 },
+    behind(j, ink, floorY) {
+      return medball(j.hip[0] - 2, floorY - 16, 16);
     },
   }, {
     torso: 2,
-    near: { hip: 42, knee: 48, shoulder: 10, elbow: 8, foot: 2 },
-    far: { hip: 70, knee: 110, foot: 20 },
+    near: { hip: 101, knee: 103, shoulder: 18, elbow: 12, foot: 0 },
+    far: { hip: 125, knee: 150, foot: 20 },
   }, {});
 }
 
